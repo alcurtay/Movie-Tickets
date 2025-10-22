@@ -1,0 +1,51 @@
+#With Boost library
+cmake_minimum_required(VERSION 3.16)
+project(booking_cli LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(Threads REQUIRED)                           # for std::thread
+find_package(Boost REQUIRED COMPONENTS program_options)  # needed if headers are included
+
+add_executable(booking movie.cpp)
+
+target_link_libraries(booking
+  PRIVATE
+    Threads::Threads
+    Boost::program_options
+)
+
+
+#Without Boost library
+find_package(Threads REQUIRED)
+target_link_libraries(booking PRIVATE Threads::Threads)
+
+
+## Linux / macOS (no external deps required)
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+./build/booking
+
+
+## Windows (vcpkg)
+# powershell
+# 1) Install Boost (only needed if you actually use program_options in your build)
+#    Pick the triplet that matches your build (most common is x64-windows)
+vcpkg install boost-program-options:x64-windows
+
+# (Optional) Make vcpkg toolchain auto-discovered by CMake
+vcpkg integrate install
+
+# 2) Configure (point CMake to the vcpkg toolchain)
+cmake -S . -B build `
+  -A x64 `
+  -DCMAKE_BUILD_TYPE=Release `
+  -DCMAKE_TOOLCHAIN_FILE="C:\vcpkg\scripts\buildsystems\vcpkg.cmake" `
+  -DVCPKG_TARGET_TRIPLET=x64-windows
+
+# 3) Build
+cmake --build build --config Release
+
+# 4) Run
+.\build\Release\booking.exe
